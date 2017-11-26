@@ -179,7 +179,7 @@ function get_channel_by_name($channel_name) {
     return null;
 }
 
-$channel = get_channel_by_name('-alle');
+$channel = get_channel_by_name($slackChannelName);
 $channel_history = get_channel_history($channel['id']);
 $user_list = get_all_users();
 $all_emojis = get_all_emojis();
@@ -364,7 +364,7 @@ function render_message($message, $user_list) {
     }
 }
 
-if ($_GET['order'] === 'reverse') {
+if ($_GET['order'] !== 'asc') {
     $channel_history = array_reverse($channel_history);
 }
 
@@ -372,7 +372,7 @@ foreach ($channel_history as $message) {
     echo render_message($message, $user_list);
 }
 
-if ($_GET['order'] === 'reverse') {
+if ($_GET['order'] !== 'asc') {
     ?>
     <script>
         window.scrollTo(0,document.body.scrollHeight);
