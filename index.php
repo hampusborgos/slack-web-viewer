@@ -235,7 +235,7 @@ function replace_slack_tags($text) {
     $text = preg_replace_callback(
         '/<(https?:\/\/.+?)\\|([^>]+?)>/',
         function ($matches) {
-            return ' <a href="' . $matches['1'] . '" target="_blank">' . $matches[2] . '</a> ';
+            return ' <a target="_top" href="' . $matches['1'] . '" target="_blank">' . $matches[2] . '</a> ';
         },
         $text
     );
@@ -243,7 +243,7 @@ function replace_slack_tags($text) {
     $text = preg_replace_callback(
         '/<(https?:\/\/.+?)>/',
         function ($matches) {
-            return ' <a href="' . $matches['1'] . '" target="_blank">' . $matches[1] . '</a> ';
+            return ' <a target="_top" href="' . $matches['1'] . '" target="_blank">' . $matches[1] . '</a> ';
         },
         $text
     );
@@ -327,7 +327,7 @@ function render_file_message($message, $user) {
         $html .= '<h2>' . $file['title'] . '</h2>';
         $html .= '<hr>';
         $html .= $file['preview'];
-        $html .= '<a class="readmore" href="' . $file['permalink_public'] . '">Kilkk her for å lese hele posten</a>';
+        $html .= '<a class="readmore" target="_top" href="' . $file['permalink_public'] . '">Kilkk her for å lese hele posten</a>';
         $html .= '</div>';
     }
     else {
