@@ -5,6 +5,7 @@ body {
 
 .slack-message {
     display: block;
+    clear: left;
     padding-top: 0.5em;
     padding-bottom: 0.5em;
 }
@@ -25,6 +26,11 @@ body {
 
 .slack-message .username {
     font-weight: bold;
+}
+
+.slack-message .readmore {
+    display: block;
+    margin-bottom: 10px;
 }
 
 .slack-message .timestamp {
@@ -59,6 +65,34 @@ body {
 img.emoji {
     width: 18px;
     height: 18px;
+}
+
+.slack-message .document {
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 5px;;
+    padding: 0 10px;
+    margin-top: 10px;
+}
+
+.slack-message .document h2 {
+    font-size: 16px;
+}
+
+.slack-message document {
+    display: block;
+}
+
+.sheet-emoji {
+    background-image: "sheet_apple_20.png";
+    width: 18px;
+    height: 18px;
+    display: inline-block;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid #ccc;
 }
 
 a {

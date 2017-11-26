@@ -4,8 +4,9 @@
 <link href="style.css" rel="stylesheet" />
 </head>
 <body>
-
 <?php
+
+date_default_timezone_set('Europe/Stockholm');
 
 $channelCacheFilename = '.channel-cache.tmp.json';
 $userlistCacheFilename = '.users-cache.tmp.json';
@@ -110,19 +111,26 @@ function get_all_emojis()
 
     $standard_emojis = json_decode(file_get_contents("emojis.json"), true);
     foreach($standard_emojis as $e) {
-        foreach($e['short_names'] as $short_name) {
-            $us = explode('-', $e['unified']);
-            $full_unicode = '';
-            foreach ($us as $u) {
-                $full_unicode .= '&#x' . $u . ';';
-            }
+        $as_html = '';
 
-            $all_emojis[$short_name] = $full_unicode;
+        /*if ($e['has_img_apple']) {
+            $as_html = '<span class="sheet-emoji" style="background-position: 2.5% 60%"></span>';
+        }
+        else*/ {
+            $us = explode('-', $e['unified']);
+            $as_html = '';
+            foreach ($us as $u) {
+                $as_html .= '&#x' . $u . ';';
+            }
+        }
+
+        foreach($e['short_names'] as $short_name) {
+            $all_emojis[$short_name] = $as_html;
         }
     }
 
     $all['slightly_smiling_face'] = 'alias:wink';
-    // $all['emojis']['upside_down_face'] = 'alias:upside_down_face';
+    $all['white_frowning_face'] = 'alias:sad';
 
     write_to_cache($emojiCacheFilename, $all_emojis);
 
@@ -155,7 +163,24 @@ function get_all_users()
     return $userlistIndexed;
 }
 
-$channel_history = get_channel_history($slackChannelId);
+function get_channel_by_name($channel_name) {
+    $all_channels = slack_api_request('channels.list', [
+        'limit' => 500,
+        'exclude_archived' => true,
+        'exclude_members' => true
+    ]);
+
+    foreach ($all_channels['channels'] as $channel) {
+        if ($channel['name'] == $channel_name) {
+            return $channel;
+        }
+    }
+
+    return null;
+}
+
+$channel = get_channel_by_name('-alle');
+$channel_history = get_channel_history($channel['id']);
 $user_list = get_all_users();
 $all_emojis = get_all_emojis();
 
@@ -190,23 +215,7 @@ function coloncode_to_emoji($coloncode) {
     return ':' . $coloncode . ':'; 
 }
 
-function render_user_message($message, $user) {
-    $html .= '<div class="slack-message">';
-
-    if ($message['parent_user_id']) {
-        return '';
-    }
-
-    $html .= '<img class="avatar" src="' . $user['profile']['image_48'] . '" aria-hidden="true" title="">';
-
-    $html .= '<div class="content">';
-
-    $html .= '<strong class="username">' . user_id_to_name($user['id']) . '</strong> ';
-    
-    $html .= '<small class="timestamp"><time datetime="' . date('Y-m-d H:i', $message['ts']) . '">' . date('H:i d.m', $message['ts']) . '</time></small>';
-
-    $text = $message['text'];
-    
+function replace_slack_tags($text) {
     $text = preg_replace_callback(
         '/<@([a-zA-Z0-9]+)>/',
         function ($matches) {
@@ -224,7 +233,15 @@ function render_user_message($message, $user) {
     );
     
     $text = preg_replace_callback(
-        '/<(https?:\/\/.+)>/',
+        '/<(https?:\/\/.+?)\\|([^>]+?)>/',
+        function ($matches) {
+            return ' <a href="' . $matches['1'] . '" target="_blank">' . $matches[2] . '</a> ';
+        },
+        $text
+    );
+    
+    $text = preg_replace_callback(
+        '/<(https?:\/\/.+?)>/',
         function ($matches) {
             return ' <a href="' . $matches['1'] . '" target="_blank">' . $matches[1] . '</a> ';
         },
@@ -236,24 +253,92 @@ function render_user_message($message, $user) {
         '#$1',
         $text
     );
+
+    return $text;
+}
+
+function render_reactions($reactions) {
+    $html = '';
+    foreach ($reactions as $r) {
+        $emoji = $r['name'];
+        $skin_modifier_pos = stripos($emoji, '::');
+        if ($skin_modifier_pos) {
+            $emoji = substr($emoji, 0, $skin_modifier_pos);
+        }
+
+        $html .= '<span class="reaction"><i title="' . $emoji . '">' . coloncode_to_emoji($emoji) . '</i> <small>' . $r['count'] . '</small>' . '</span>';
+    }
+
+    return $html;
+}
+
+function render_avatar($user) {
+    return '<img class="avatar" src="' . $user['profile']['image_48'] . '" aria-hidden="true" title="">';
+}
+
+function render_userinfo($message, $user) {
+    $html .= '<strong class="username">' . user_id_to_name($user['id']) . '</strong> ';
+
+    $html .= '<small class="timestamp"><time datetime="' . date('Y-m-d H:i', $message['ts']) . '">' . date('d.m - H:i', $message['ts']) . '</time></small>';
+
+    return $html;
+}
+
+function render_user_message($message, $user) {
+    $html .= '<div class="slack-message">';
+
+    if ($message['parent_user_id']) {
+        return '';
+    }
+
+    $html .= render_avatar($user);
+
+    $html .= '<div class="content">';
+
+    $html .= render_userinfo($message, $user);
     
-    $html .= '<div class="message">' . $text . '</div>';
+    $html .= '<div class="message">' . replace_slack_tags($message['text']) . '</div>';
     
     if (isset($message['reactions'])) {
-        foreach ($message['reactions'] as $r) {
-            $html .= '<span class="reaction"><i>' . coloncode_to_emoji($r['name']) . '</i> <small>' . $r['count'] . '</small>' . '</span>';
-        }
+        $html .= render_reactions($message['reactions']);
     }
 
     $html .= '<!-- ' . json_encode($message, JSON_PRETTY_PRINT) . ' -->';
 
     // $html .= '<pre class="raw">' . json_encode($message, JSON_PRETTY_PRINT) . '</pre>';
 
-    $html .= '</div>'; // .message
+    $html .= '</div>'; // .content
     $html .= '</div>'; // .slack-message
 
     return $html;
+}
 
+function render_file_message($message, $user) {
+    $file = $message['file'];
+    $html .= '<div class="slack-message">';
+
+    $html .= render_avatar($user);
+    
+    $html .= '<div class="content file">';
+    
+    if ($file['pretty_type'] === 'Post') {
+        $html .= render_userinfo($message, $user);
+        $html .= '<div class="document">';
+        $html .= '<h2>' . $file['title'] . '</h2>';
+        $html .= '<hr>';
+        $html .= $file['preview'];
+        $html .= '<a class="readmore" href="' . $file['permalink_public'] . '">Kilkk her for å lese hele posten</a>';
+        $html .= '</div>';
+    }
+    else {
+        $html .= '<div class="message">' . replace_slack_tags($message['text']) . '</div>';        
+    }
+
+    $html .= render_reactions($file['reactions']);
+
+    $html .= '</div>'; // .content
+    $html .= '</div>'; // .slack-message
+    return $html;
 }
 
 function render_message($message, $user_list) {
@@ -267,6 +352,8 @@ function render_message($message, $user_list) {
 
             switch($message['subtype']) {
 
+                case 'file_share':
+                    return render_file_message($message, $user_list[$message['user']]);
                 case 'channel_join':
                 default:
                     return;
@@ -277,10 +364,23 @@ function render_message($message, $user_list) {
     }
 }
 
+if ($_GET['order'] === 'reverse') {
+    $channel_history = array_reverse($channel_history);
+}
 
 foreach ($channel_history as $message) {
     echo render_message($message, $user_list);
 }
+
+if ($_GET['order'] === 'reverse') {
+    ?>
+    <script>
+        window.scrollTo(0,document.body.scrollHeight);
+    </script>
+    <?php
+}
 ?>
+
+<script>document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1"></' + 'script>')</script>
 </body>
 </html>
