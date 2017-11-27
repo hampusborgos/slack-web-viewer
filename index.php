@@ -18,7 +18,7 @@ include_once('config.php');
 $channelCacheFilename = $cacheDirectory . '/.channel-cache.tmp.json';
 $userlistCacheFilename = $cacheDirectory . '/.users-cache.tmp.json';
 $emojiCacheFilename = $cacheDirectory . '/.emoji-cache.tmp.json';
-$channelCacheTimeout = 1;
+$channelCacheTimeout = 60;
 $userlistCacheTimeout = 300;
 $emojiCacheTimeout = 3600;
 
