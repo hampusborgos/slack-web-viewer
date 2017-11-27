@@ -8,6 +8,13 @@
 
 date_default_timezone_set('Europe/Stockholm');
 
+if ($_SERVER['REQUEST_URI'] == 'localhost') {
+    ini_set('display_errors',1);
+    error_reporting(E_ALL);
+}
+
+include_once('config.php');
+
 $channelCacheFilename = $cacheDirectory . '/.channel-cache.tmp.json';
 $userlistCacheFilename = $cacheDirectory . '/.users-cache.tmp.json';
 $emojiCacheFilename = $cacheDirectory . '/.emoji-cache.tmp.json';
@@ -15,7 +22,6 @@ $channelCacheTimeout = 1;
 $userlistCacheTimeout = 300;
 $emojiCacheTimeout = 3600;
 
-include_once('config.php');
 
 function slack_api_request ($apiPath, $postFields) {
     global $slackApiToken;
@@ -277,7 +283,7 @@ function render_avatar($user) {
 }
 
 function render_userinfo($message, $user) {
-    $html .= '<strong class="username">' . user_id_to_name($user['id']) . '</strong> ';
+    $html = '<strong class="username">' . user_id_to_name($user['id']) . '</strong> ';
 
     $html .= '<small class="timestamp"><time datetime="' . date('Y-m-d H:i', $message['ts']) . '">' . date('d.m - H:i', $message['ts']) . '</time></small>';
 
@@ -285,9 +291,9 @@ function render_userinfo($message, $user) {
 }
 
 function render_user_message($message, $user) {
-    $html .= '<div class="slack-message">';
+    $html = '<div class="slack-message">';
 
-    if ($message['parent_user_id']) {
+    if (isset($message['parent_user_id'])) {
         return '';
     }
 
@@ -315,7 +321,7 @@ function render_user_message($message, $user) {
 
 function render_file_message($message, $user) {
     $file = $message['file'];
-    $html .= '<div class="slack-message">';
+    $html = '<div class="slack-message">';
 
     $html .= render_avatar($user);
     
