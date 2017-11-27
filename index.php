@@ -8,9 +8,9 @@
 
 date_default_timezone_set('Europe/Stockholm');
 
-$channelCacheFilename = sys_get_temp_dir() . '/.channel-cache.tmp.json';
-$userlistCacheFilename = sys_get_temp_dir() . '/.users-cache.tmp.json';
-$emojiCacheFilename = sys_get_temp_dir() . '/.emoji-cache.tmp.json';
+$channelCacheFilename = $cacheDirectory . '/.channel-cache.tmp.json';
+$userlistCacheFilename = $cacheDirectory . '/.users-cache.tmp.json';
+$emojiCacheFilename = $cacheDirectory . '/.emoji-cache.tmp.json';
 $channelCacheTimeout = 1;
 $userlistCacheTimeout = 300;
 $emojiCacheTimeout = 3600;
