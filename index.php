@@ -231,7 +231,7 @@ function replace_slack_tags($text) {
     );
     
     $text = preg_replace_callback(
-        '/:([a-zA-Z0-9_]+):/',
+        '/:([a-zA-Z0-9_\-]+)(::[a-zA-Z0-9_\-])?:/',
         function ($matches) {
             return coloncode_to_emoji($matches[1]);
         },
@@ -255,7 +255,7 @@ function replace_slack_tags($text) {
     );
 
     $text = preg_replace(
-        '/<#[a-zA-Z0-9]+\|([a-z0-9\-_]+)>/',
+        '/<#[a-zA-Z0-9]+\|([a-zA-Z0-9æøåÅÆØäöÄÖ\-_]+)>/',
         '#$1',
         $text
     );

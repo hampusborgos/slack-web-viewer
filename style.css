@@ -8,6 +8,7 @@ body {
     clear: left;
     padding-top: 0.5em;
     padding-bottom: 0.5em;
+    overflow-x: hidden;
 }
 
 .slack-message:hover {
@@ -39,6 +40,7 @@ body {
 
 .slack-message .message {
     color: #000;
+    word-wrap: break-word;
 }
 
 .reaction {
