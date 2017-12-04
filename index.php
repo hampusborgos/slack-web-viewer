@@ -260,6 +260,9 @@ function replace_slack_tags($text) {
         $text
     );
 
+    // 3+ are replaced with just two
+    $text = preg_replace("/\n{3,}/", "\n\n", $text);
+
     return $text;
 }
 
