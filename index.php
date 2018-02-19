@@ -385,6 +385,10 @@ if ($_GET['order'] !== 'asc') {
     ?>
     <script>
         window.scrollTo(0,document.body.scrollHeight);
+        setTimeout(function() {
+            // Allow images to load
+            window.scrollTo(0,document.body.scrollHeight);
+        }, 300);
     </script>
     <?php
 }
